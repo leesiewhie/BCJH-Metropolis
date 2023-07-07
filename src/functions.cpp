@@ -6,9 +6,9 @@
 #include <cassert>
 
 const double bestToolProb = 0.9;
-const char* guestName[13] = {"蓝采和", "吕洞宾", "韩湘子", "玉贵人", "苏妲己", 
+const char* guestName[14] = {"蓝采和", "吕洞宾", "韩湘子", "玉贵人", "苏妲己", 
                             "何仙姑", "铁拐李", "何仙姑2", "胡喜媚", "韩湘子2", 
-                            "蓝采和2", "胡喜媚2", "曹国舅"};
+                            "蓝采和2", "胡喜媚2", "曹国舅", "钟离权"};
 
 ToolEnum toolHeuristic(States &s, int chefId) {
     auto chef = s.chef[chefId];
