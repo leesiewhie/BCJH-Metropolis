@@ -2,6 +2,7 @@
 #define VALUE_HPP
 #include <iostream>
 #include "include/json/json.h"
+#include <string>
 #include <math.h>
 struct DishBuff {
     int dishNum;
@@ -108,16 +109,24 @@ class Ability {
 
 class AbilityBuff : public Ability {
   public:
+    int basic = 0;
     AbilityBuff() {}
     AbilityBuff(int stirfry, int bake, int boil, int steam, int fry, int knife)
         : Ability(stirfry, bake, boil, steam, fry, knife) {}
-    void print() { this->Ability::print("AbilityBuff: "); }
+    void print() {
+        std::cout << "AbilityBuff: Basic: " << this->basic;
+        this->Ability::print("; ");
+    }
+    void add(const AbilityBuff &a) {
+        this->Ability::add(a);
+        this->basic += a.basic;
+    }
+    void add(const Ability &a) { this->Ability::add(a); }
+    void add(int a){ this->Ability::add(a); }
 };
-class CookAbility : public Ability {
-    
-
+class CookAbility : public Ability { 
   public:
-    Ability percent;
+    Ability percent = Ability();
     CookAbility(int stirfry, int bake, int boil, int steam, int fry, int knife)
         : Ability(stirfry, bake, boil, steam, fry, knife) {}
     CookAbility() : Ability() {}
@@ -131,20 +140,22 @@ class CookAbility : public Ability {
         this->Ability::add(a);
         this->percent.add(a.percent);
     }
-    void add(const Ability &a) {
-        this->Ability::add(a);
-    }
-    void add(int a){
-        this->Ability::add(a);
-    }
+    void add(const Ability &a) { this->Ability::add(a); }
+    void add(int a) { this->Ability::add(a); }
     int operator*(const AbilityBuff &a);
     void handle_percent() {
-        this->stirfry = int(ceil(this->stirfry * (this->percent.stirfry + 100) / 100.0));
-        this->bake = int(ceil(this->bake * (this->percent.bake + 100) / 100.0));
-        this->boil = int(ceil(this->boil * (this->percent.boil + 100) / 100.0));
-        this->steam = int(ceil(this->steam * (this->percent.steam + 100) / 100.0));
-        this->fry = int(ceil(this->fry * (this->percent.fry + 100) / 100.0));
-        this->knife = int(ceil(this->knife * (this->percent.knife + 100) / 100.0));
+        if (this->percent.stirfry)
+            this->stirfry = int(ceil(this->stirfry * (this->percent.stirfry + 100) / 100.0));
+        if (this->percent.bake)
+            this->bake = int(ceil(this->bake * (this->percent.bake + 100) / 100.0));
+        if (this->percent.boil)
+            this->boil = int(ceil(this->boil * (this->percent.boil + 100) / 100.0));
+        if (this->percent.steam)
+            this->steam = int(ceil(this->steam * (this->percent.steam + 100) / 100.0));
+        if (this->percent.fry)
+            this->fry = int(ceil(this->fry * (this->percent.fry + 100) / 100.0));
+        if (this->percent.knife)
+            this->knife = int(ceil(this->knife * (this->percent.knife + 100) / 100.0));
     }
 };
 class StrangeBuff {
@@ -185,21 +196,80 @@ class StrangeBuff {
                     << "(" << this->Rank.dishBuff << ")" << std::endl;
     }
 };
-// 技法光环
-class SkillHalo : public Ability {
+class Halo{
   public:
-    SkillHalo(int stirfry, int bake, int boil, int steam, int fry, int knife)
-        : Ability(stirfry, bake, boil, steam, fry, knife) {}
-    SkillHalo() : Ability() {}
-    void print() { this->Ability::print("SkillHalo: "); }
+    bool enable_skill;
+    Ability skill;
+    bool enable_skillNext;
+    Ability skillNext;
+    bool enable_buff;
+    AbilityBuff buff;
+    bool enable_buffNext;
+    AbilityBuff buffNext;
+    Halo() {
+        this->enable_skill = false;
+        this->skill = Ability();
+        this->enable_skillNext = false;
+        this->skillNext = Ability();
+        this->enable_buff = false;
+        this->buff = AbilityBuff();
+        this->enable_buffNext = false;
+        this->buffNext = AbilityBuff();
+    }
+    void print() {
+        if (this->enable_skill)
+            this->skill.print("SkillHalo: ");
+        if (this->enable_skillNext)
+            this->skillNext.print("SkillHaloNext: ");
+        if (this->enable_buff) {
+            std::cout << "BuffHalo: ";
+            this->buff.print();            
+        }
+        if (this->enable_buffNext) {
+            std::cout << "BuffHaloNext: ";
+            this->buffNext.print();            
+        }
+    }
+    void add(const Halo &a) {
+        if (a.enable_skill) {
+            this->enable_skill = true;
+            this->skill.add(a.skill);
+        }
+        if (a.enable_skillNext) {
+            this->enable_skillNext = true;
+            this->skillNext.add(a.skillNext);
+        }
+        if (a.enable_buff) {
+            this->enable_buff = true;
+            this->buff.add(a.buff);
+        }
+        if (a.enable_buffNext) {
+            this->enable_buffNext = true;
+            this->buffNext.add(a.buffNext);
+        }
+    }
 };
-// 技法光环:Next
-class SkillHaloNext : public Ability {
+class ConditionalSkill {
   public:
-    SkillHaloNext(int stirfry, int bake, int boil, int steam, int fry, int knife)
-        : Ability(stirfry, bake, boil, steam, fry, knife) {}
-    SkillHaloNext() : Ability() {}
-    void print() { this->Ability::print("SkillHaloNext: "); }
+    bool enable = false;
+    std::string type;
+    int value = 0;
+    std::string condition;
+    std::string conditionType;
+    int conditionValue;
+    void add(const ConditionalSkill &a) {
+        if (a.enable) {
+            this->enable = true;
+            this->type = a.type;
+            this->value = a.value;
+            this->condition = a.condition;
+            this->type = a.type;
+            this->conditionValue = a.conditionValue;
+        }
+    }
+    void print() {
+        if (this->enable) std::cout << "Has conditonal skill" << std::endl;
+    }
 };
 class Skill {
   private:
@@ -211,19 +281,13 @@ class Skill {
     RarityBuff rarityBuff;
     MaterialCategoryBuff materialBuff;
     StrangeBuff strangeBuff;
+    ConditionalSkill conditionalSkill;
+    Halo halo;
     int coinBuff;
-    bool halo;
-    SkillHalo skillHalo;
-    bool halo_next;
-    SkillHaloNext skillHaloNext;
     Skill(CookAbility ability, AbilityBuff abilityBuff, FlavorBuff flavorBuff, RarityBuff rarityBuff, 
-          MaterialCategoryBuff materialBuff, StrangeBuff strangeBuff,int coinBuff,
-          bool halo, SkillHalo skillHalo,
-          bool halo_next, SkillHaloNext skillHaloNext)
+          MaterialCategoryBuff materialBuff, StrangeBuff strangeBuff,int coinBuff)
         : ability(ability), abilityBuff(abilityBuff), flavorBuff(flavorBuff), rarityBuff(rarityBuff),
-          materialBuff(materialBuff), strangeBuff(strangeBuff), coinBuff(coinBuff),
-          halo(halo), skillHalo(skillHalo), 
-          halo_next(halo_next), skillHaloNext(skillHaloNext){}
+          materialBuff(materialBuff), strangeBuff(strangeBuff), coinBuff(coinBuff){}
     Skill() {
         this->ability = CookAbility();
         this->abilityBuff = AbilityBuff();
@@ -231,11 +295,9 @@ class Skill {
         this->rarityBuff = RarityBuff();
         this->materialBuff = MaterialCategoryBuff();
         this->strangeBuff = StrangeBuff();
+        this->conditionalSkill = ConditionalSkill();
+        this->halo = Halo();
         this->coinBuff = 0;
-        this->halo = false;
-        this->skillHalo = SkillHalo();
-        this->halo_next = false;
-        this->skillHaloNext = SkillHaloNext();
     }
     Skill getSkill(int id) { return skillList[id]; }
     static void loadJson(Json::Value &v);
@@ -246,11 +308,9 @@ class Skill {
         this->rarityBuff.add(s.rarityBuff);
         this->materialBuff.add(s.materialBuff);
         this->strangeBuff.add(s.strangeBuff);
+        this->conditionalSkill.add(s.conditionalSkill);
+        this->halo.add(s.halo);
         this->coinBuff += s.coinBuff;
-        this->halo |= s.halo;
-        this->skillHalo.add(s.skillHalo);
-        this->halo_next |= s.halo_next;
-        this->skillHaloNext.add(s.skillHaloNext);
     }
     void print() {
         this->ability.print();
@@ -259,15 +319,9 @@ class Skill {
         this->rarityBuff.print();
         this->materialBuff.print();
         this->strangeBuff.print();
+        this->halo.print();
         std::cout << "CoinBuff: " << this->coinBuff << std::endl;
-        if (this->halo){
-            std::cout << "Halo: " << std::endl;
-            this->skillHalo.print();
-        }
-        if (this->halo_next){
-            std::cout << "Halo_next: " << std::endl;
-            this->skillHaloNext.print();
-        }
+        this->conditionalSkill.print();
     }
 };
 enum ToolEnum {

@@ -26,7 +26,8 @@ struct Result {
 };
 Result run(const CList &, RList &, int, bool, int);
 void calculator(CList &, RList &);
-void add_halo(States *);
+void condition_handle(States &);
+void add_halo(States &);
 void parseArgs(int argc, char *argv[], bool &silent, int &log, bool &calculate,
                bool &mp, int &seed);
 int main(int argc, char *argv[]) {
@@ -144,7 +145,8 @@ Result run(const CList &chefList, RList &recipeList, int log, bool silent,
     States *s = new States;
     *s = saRunner.run(NULL, true, silent);
     *s = perfectChef(*s, chefListPtr);
-    add_halo(s);
+    condition_handle(*s);
+    add_halo(*s);
     int score = e0::sumPrice(*s, chefListPtr, &recipeList, log, false);
     return Result{score, seed, chefListPtr, recipeList, s};
 }
@@ -210,22 +212,91 @@ void calculator(CList &chefList, RList &recipeList) {
     saRunner.print(s, true);
     std::cout << "\n\nScore: " << score << std::endl;
 }
-void add_halo(States *s) {
+//跟多个菜有关的技能，年糕，汤圆
+void condition_handle(States &s) {
+    for (int i = 0; i < NUM_CHEFS; i++) 
+        if (s.chef[i]->skill.conditionalSkill.enable) {
+            //暂时只考虑已有厨师
+            ConditionalSkill *c = &s.chef[i]->skill.conditionalSkill;
+            //汤圆
+            if (c->type == "BasicPrice") {
+                int tot = 0;
+                for (int j = i * DISH_PER_CHEF; j < (i + 1) * DISH_PER_CHEF; j++)
+                    if (s.chef[i]->skill.ability / s.recipe[j]->cookAbility >= c->conditionValue)
+                        tot += c->value;
+                s.chef[i]->skill.abilityBuff.basic += tot;
+            } else
+            if (c->type == "UseFry") {
+                int j = i * DISH_PER_CHEF;
+                int cnt = 0;
+                if (s.recipe[j]->cookAbility.bake > 0 &&
+                    s.recipe[j + 1]->cookAbility.bake > 0 &&
+                    s.recipe[j + 2]->cookAbility.bake > 0)
+                    cnt ++;
+                if (s.recipe[j]->cookAbility.stirfry > 0 &&
+                    s.recipe[j + 1]->cookAbility.stirfry > 0 &&
+                    s.recipe[j + 2]->cookAbility.stirfry > 0)
+                    cnt ++;
+                if (s.recipe[j]->cookAbility.steam > 0 &&
+                    s.recipe[j + 1]->cookAbility.steam > 0 &&
+                    s.recipe[j + 2]->cookAbility.steam > 0)
+                    cnt ++;
+                if (s.recipe[j]->cookAbility.boil > 0 &&
+                    s.recipe[j + 1]->cookAbility.boil > 0 &&
+                    s.recipe[j + 2]->cookAbility.boil > 0)
+                    cnt ++;
+                if (s.recipe[j]->cookAbility.knife > 0 &&
+                    s.recipe[j + 1]->cookAbility.knife > 0 &&
+                    s.recipe[j + 2]->cookAbility.knife > 0)
+                    cnt ++;
+                if (s.recipe[j]->cookAbility.fry > 0 &&
+                    s.recipe[j + 1]->cookAbility.fry > 0 &&
+                    s.recipe[j + 2]->cookAbility.fry > 0)
+                    cnt ++;
+                if (cnt > 0) {
+                    s.chef[i]->skill.halo.enable_buff = true;
+                    s.chef[i]->skill.halo.buff.fry = cnt * c->value;
+                }
+            }
+        }
+    
+}
+//光环处理，及乘法相关技法处理
+void add_halo(States &s) {
     for (int g = 0; g < NUM_GUESTS; g++) {
         for (int i = g * CHEFS_PER_GUEST; i < CHEFS_PER_GUEST * (g + 1); i++) {
-            if (s->chef[i]->skill.halo) {
+            if (s.chef[i]->skill.halo.enable_skill) {
                 if (MODE == 1) {//宴会模式，光环只对后面的角色生效
                     for (int k = i; k < CHEFS_PER_GUEST * (g + 1); k++) {
-                        s->chef[k]->skill.ability.add(s->chef[i]->skill.skillHalo);
+                        s.chef[k]->skill.ability.add(s.chef[i]->skill.halo.skill);
+                    }
+                } else {
+                    for (int k = g * 3; k < CHEFS_PER_GUEST * (g + 1); k++) {
+                        s.chef[k]->skill.ability.add(s.chef[i]->skill.halo.skill);
                     }
                 }
             }
-            if ((i + 1) % CHEFS_PER_GUEST && s->chef[i]->skill.halo_next) {
-                s->chef[i + 1]->skill.ability.add(s->chef[i]->skill.skillHaloNext);
+            if (s.chef[i]->skill.halo.enable_buff) {
+                if (MODE == 1) {//宴会模式，光环只对后面的角色生效
+                    for (int k = i; k < CHEFS_PER_GUEST * (g + 1); k++) {
+                        s.chef[k]->skill.abilityBuff.add(s.chef[i]->skill.halo.buff);
+                    }
+                } else {
+                    for (int k = g * 3; k < CHEFS_PER_GUEST * (g + 1); k++) {
+                        s.chef[k]->skill.abilityBuff.add(s.chef[i]->skill.halo.buff);
+                    }
+                }
+            }
+            if ((i + 1) % CHEFS_PER_GUEST && s.chef[i]->skill.halo.enable_skillNext) {
+                s.chef[i + 1]->skill.ability.add(s.chef[i]->skill.halo.skillNext);
+            }
+            if ((i + 1) % CHEFS_PER_GUEST && s.chef[i]->skill.halo.enable_buffNext) {
+                s.chef[i + 1]->skill.abilityBuff.add(s.chef[i]->skill.halo.buffNext);
             }
         }
     }
+    //所有技法先加后乘
     for (int i = 0; i < NUM_CHEFS; i++) {
-        s->chef[i]->skill.ability.handle_percent();
+        s.chef[i]->skill.ability.handle_percent();
     }
 }
