@@ -283,7 +283,7 @@ void Skill::loadJson(Json::Value &v) {
                         effect["conditionType"].asString();
                     if (conditionType == "CookbookRarity") {
                         for (auto num : effect["conditionValueList"]) {
-                            skill->rarityBuff.rarityBuff[num.asInt() - 1] = value;
+                            skill->rarityBuff[num.asInt()] = value;
                         }
                     }
                     if (conditionType == "ExcessCookbookNum") {

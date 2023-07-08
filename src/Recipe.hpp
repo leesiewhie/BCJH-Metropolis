@@ -17,10 +17,10 @@ class Materials {
     bool fish;
     bool creation;
     Materials() : vegetable(false), meat(false), fish(false), creation(false) {}
-    void print() {
-        std::cout << "Materials: Vegetable: " << this->vegetable
-                  << "; Meat: " << this->meat << "; Fish: " << this->fish
-                  << "; Creation: " << this->creation << std::endl;
+    void print(std::string end = "\n") {
+        std::cout << (this->vegetable ? "菜 " : "") << (this->meat ? "肉 " : "")
+                  << (this->fish ? "鱼 " : "") << (this->creation ? "面 " : "")
+                  << end;
     }
     int operator*(MaterialCategoryBuff &buff) {
         int sum = 0;

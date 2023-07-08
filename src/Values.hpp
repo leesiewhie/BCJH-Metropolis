@@ -52,8 +52,10 @@ class FlavorBuff {
     }
 };
 class RarityBuff {
-  public:
     int rarityBuff[5] = {0, 0, 0, 0, 0};
+  public:
+    /*几火就是几，不用减一*/
+    int &operator[](int i) { return rarityBuff[i - 1]; }
     void add(const RarityBuff &r) { for (int i = 0; i < 5; i++) this->rarityBuff[i] += r.rarityBuff[i]; }
     void print() {
         std::cout << "RarityBuff: ";
@@ -62,8 +64,6 @@ class RarityBuff {
         }
         std::cout << std::endl;
     }
-    /*几火就是几，不用减一*/
-    int &operator[](int i) { return rarityBuff[i - 1]; }
 };
 class Ability {
   public:

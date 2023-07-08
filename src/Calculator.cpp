@@ -14,7 +14,7 @@ BanquetInfo getPrice(Chef *chef, Recipe *recipe, BanquetRule r, bool verbose) {
         if (verbose)
             std::cout << "Grade 0" << std::endl;
         {
-            BanquetInfo b = {0, 0};
+            BanquetInfo b = {0, 50}; //不能做的不要出现在结果中
             return b;
         }
     }
@@ -33,6 +33,7 @@ BanquetInfo getPrice(Chef *chef, Recipe *recipe, BanquetRule r, bool verbose) {
     default:
         gradebuff = 100;
     }
+    gradebuff += chef->skill.rarityBuff[recipe->rarity];
     auto rb = recipe->rarityBuff[recipe->rarity - 1];
     r.lenientRule.merge(r.strictRule); // vscode报错不认友元，但是编译没问题
     BanquetLenientRule rule = r.lenientRule;
@@ -47,28 +48,29 @@ BanquetInfo getPrice(Chef *chef, Recipe *recipe, BanquetRule r, bool verbose) {
     skillBuff += strangeBuff;
     //strange buff handle end
     int buff = gradebuff + skillBuff + intentionAddBuff;
-    int singlePrice =
-        std::ceil((recipe->price + rule.baseRule.directAdd) *
-                  (1.0 + intentionBaseBuff / 100.0) * (1.0 + buff / 100.0));
+    int singlePrice = (int)std::ceil((recipe->price + rule.baseRule.directAdd) *
+                                     (1.0 + intentionBaseBuff / 100.0) *
+                                     (1.0 + buff / 100.0));
     // std::cout << singlePrice << std::endl;
     int totalPrice = singlePrice * rb.dishNum;
     if (verbose) {
         // chef->print();
         recipe->print();
-        std::cout << "Grade: " << grade << std::endl;
+        std::cout << "等级: " << grade << "，加成" << gradebuff << "%"
+                  << std::endl;
         std::cout << "Skill: " << skillBuff << "% ( = 味道"
                   << recipe->flavor * chef->skill.flavorBuff << " + 技法"
                   << recipe->cookAbility * chef->skill.abilityBuff << " + 食材"
                   << recipe->materialCategories * chef->skill.materialBuff
                   << " + 修炼" << rb.dishBuff << " + 金币"
-                  << (chef->coinBuffOn ? chef->skill.coinBuff : 0) 
+                  << (chef->coinBuffOn ? chef->skill.coinBuff : 0)
                   << " + 其它" << strangeBuff << ")"
                   << std::endl;
         std::cout << "Intention: (基础+" << rule.baseRule.directAdd << "，+"
                   << intentionBaseBuff << "%；售价+" << intentionAddBuff
                   << "%) " << std::endl;
-        std::cout << "售价总计Buff: " << buff << std::endl;
-        std::cout << "Price: " << totalPrice << std::endl;
+        std::cout << "售价总计Buff: " << buff << "%" << std::endl;
+        std::cout << "╰--> 总价: " << totalPrice << std::endl;
     }
     int full;
     if (rule.addRule.fullAdd) {

@@ -276,7 +276,10 @@ int e0::sumPrice(States s, CList *chefList, RList *recipeList, int log,
                         break;
                     default:
                         int delta = std::abs(totalFull - bestFull[g]);
-                        ansCache = std::ceil(totalScore * (1 - 0.05 * delta));
+                        if (delta >= 20)
+                            ansCache = 0;
+                        else
+                            ansCache = std::ceil(totalScore * (1 - 0.05 * delta));
                     }
                     ans += ansCache;
                 }
@@ -410,17 +413,17 @@ States perfectTool(States &s) {
         s.toolCKPT[i] = bestTool;
     }
     return s;
-}
+}   
 States perfectChef(States &s, CList *c) {
     // perform a one-shot deviation from current state
     States newS = s;
     States bestS = s;
     for (int i = 0; i < NUM_CHEFS; i++) {
         for (auto &chef : *c) {
-            newS.chef[i] = &chef;
             if (repeatChef(&chef, newS.chef, i)) {
                 continue;
             }
+            newS.chef[i] = &chef;
             States pS = perfectTool(newS);
             int pSs = e0::sumPrice(pS);
             int bestSs = e0::sumPrice(bestS);
