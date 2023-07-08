@@ -50,11 +50,26 @@ class Flavor {
     Flavor()
         : sweet(false), salty(false), sour(false), bitter(false), spicy(false),
           tasty(false) {}
-    void print() {
-        std::cout << "Flavor: Sweet: " << this->sweet
-                  << "; Salty: " << this->salty << "; Sour: " << this->sour
-                  << "; Bitter: " << this->bitter << "; Spicy: " << this->spicy
-                  << "; Tasty: " << this->tasty << std::endl;
+    void print(std::string end = "\n") {
+        if (this->sweet) {
+            std::cout << "甜";
+        }
+        if (this->salty) {
+            std::cout << "咸";
+        }
+        if (this->sour) {
+            std::cout << "酸";
+        }
+        if (this->bitter) {
+            std::cout << "苦";
+        }
+        if (this->spicy) {
+            std::cout << "辣";
+        }
+        if (this->tasty) {
+            std::cout << "鲜";
+        }
+        std::cout << end;
     }
     FlavorEnum get_flavor() {
         if (this-> sweet){
